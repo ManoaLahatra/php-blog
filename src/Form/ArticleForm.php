@@ -11,24 +11,45 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
 
 class ArticleForm extends AbstractType
 {
-    public function buildForm(FormBuilderInterface $builder, array $options): void
-    {
-        $builder
-            ->add('title')
-            ->add('content')
-            ->add('createdAt')
-            ->add('categories', EntityType::class, [
-                'class' => Category::class,
-                'choice_label' => 'id',
-                'multiple' => true,
-            ])
-        ;
-    }
+	public function buildForm(FormBuilderInterface $builder, array $options): void
+	{
+		$builder
+			->add('title', TextType::class, [
+				'label' => 'Titre de l\'article',
+				'attr' => [
+					'class' => 'form-control',
+					'placeholder' => 'Entrez un titre pour votre article',
+					'required' => true
+				]
+			])
+			->add('content', TextareaType::class, [
+				'label' => 'Contenu de l\'article',
+				'attr' => [
+					'class' => 'form-control',
+					'rows' => 10,
+					'placeholder' => 'Écrivez le contenu de votre article ici...',
+					'required' => true
+				]
+			])
+			->add('categories', EntityType::class, [
+				'class' => Category::class,
+				'choice_label' => 'title',
+				'multiple' => true,
+				'expanded' => true,
+				'label' => 'Catégories',
+				'attr' => [
+					'class' => 'form-check',
+				],
+				'label_attr' => [
+					'class' => 'form-check-label'
+				]
+			]);
+	}
 
-    public function configureOptions(OptionsResolver $resolver): void
-    {
-        $resolver->setDefaults([
-            'data_class' => Article::class,
-        ]);
-    }
+	public function configureOptions(OptionsResolver $resolver): void
+	{
+		$resolver->setDefaults([
+			'data_class' => Article::class,
+		]);
+	}
 }
