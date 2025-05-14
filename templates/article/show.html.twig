@@ -1,34 +1,71 @@
-{% extends 'base.html.twig' %}
+{# templates/article/show.html.twig #}
+	{% extends 'base.html.twig' %}
+		{% block title %}{{ article.title }}{% endblock %}
+			{% block body %}
+				{# Affichage de l'article #}
+				{{ article.title }}
+				{{ article.content|nl2br }}
 
-{% block title %}Article{% endblock %}
+				{# Affichage des catégories #}
+				{% if article.categories|length > 0 %}
+                    Catégories :
+                        {% for category in article.categories %}
+                            {{ category.title }}
+                        {% endfor %}
+                {% endif %}
 
-{% block body %}
-    <h1>Article</h1>
+                {# Section des commentaires #}
+                Commentaires ({{ article.comments|length }})
+                {% if article.comments|length > 0 %}
+                    {% for comment in article.comments %}
+                        {{ comment.author }}
+                        {{ comment.createdAt|date('d/m/Y H:i') }}
+                        {{ comment.content }}
 
-    <table class="table">
-        <tbody>
-            <tr>
-                <th>Id</th>
-                <td>{{ article.id }}</td>
-            </tr>
-            <tr>
-                <th>Title</th>
-                <td>{{ article.title }}</td>
-            </tr>
-            <tr>
-                <th>Content</th>
-                <td>{{ article.content }}</td>
-            </tr>
-            <tr>
-                <th>CreatedAt</th>
-                <td>{{ article.createdAt ? article.createdAt|date('Y-m-d H:i:s') : '' }}</td>
-            </tr>
-        </tbody>
-    </table>
+					{% endfor %}
+				{% else %}
+                    Aucun commentaire pour le moment. Soyez le premier à réagir !
+				{% endif %}
 
-    <a href="{{ path('app_article_index') }}">back to list</a>
+				{# Formulaire d'ajout de commentaire #}
+                Laisser un commentaire
+                {{ form_start(commentForm, {'attr': {'class': 'needs-validation', 'novalidate':
+	                'novalidate'}})
+		        }}
 
-    <a href="{{ path('app_article_edit', {'id': article.id}) }}">edit</a>
+				{{ form_label(commentForm.author, 'Votre nom', {'label_attr': {'class':
+	                'form-label'}})
+		        }}
+			    {{ form_widget(commentForm.author, {'attr': {
+					'class': 'form-control',
+					'placeholder': 'Votre nom',
+					'required': 'required'
+				}}) }}
 
-    {{ include('article/_delete_form.html.twig') }}
+				Veuillez saisir votre nom.
+                {{ form_label(commentForm.content, 'Votre commentaire', {'label_attr': {'class':'form-label'}}) }}
+				{{ form_widget(commentForm.content, {'attr': {
+					'class': 'form-control',
+					'rows': 4,
+					'placeholder': 'Votre commentaire...',
+					'required': 'required'
+				}}) }}
+
+				Veuillez saisir un commentaire.
+
+                Publier le commentaire
+                {{ form_end(commentForm) }}
+
+{% endblock %}
+
+{% block stylesheets %}
+	{{ parent() }}
+		.article-content {
+			line-height: 1.8;
+			font-size: 1.05em;
+		}
+		.comment-form {
+			max-width: 800px;
+			margin: 0 auto;
+		}
 {% endblock %}
