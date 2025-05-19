@@ -12,15 +12,28 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use App\Entity\Comment;
+use Knp\Component\Pager\PaginatorInterface;
+
 
 #[Route('/article')]
 final class ArticleController extends AbstractController
 {
-    #[Route(name: 'app_article_index', methods: ['GET'])]
-    public function index(ArticleRepository $articleRepository): Response
+    #[Route('/', name: 'app_article_index', methods: ['GET'])]
+
+    public function index(ArticleRepository $articleRepository, PaginatorInterface $paginator, Request $request): Response
     {
+        $query = $articleRepository->createQueryBuilder('a')
+            ->orderBy('a.createdAt', 'DESC')
+            ->getQuery();
+
+        $pagination = $paginator->paginate(
+            $query,
+            $request->query->getInt('page', 1),
+            6
+        );
+
         return $this->render('article/index.html.twig', [
-            'articles' => $articleRepository->findAll(),
+            'pagination' => $pagination,
         ]);
     }
 
@@ -44,34 +57,30 @@ final class ArticleController extends AbstractController
         ]);
     }
 
-    #[Route('/{id}', name: 'app_article_show', methods: ['GET'])]
-    public function show(Article $article, Request $request, EntityManagerInterface $entityManager): Response
-    {
+    #[Route('/article/{id}', name: 'app_article_show', methods: ['GET', 'POST'])]
+    public function show(
+        Article $article,
+        Request $request,
+        EntityManagerInterface $entityManager
+    ): Response {
         $comment = new Comment();
-        $comment->setArticle($article);
+        $form = $this->createForm(CommentForm::class, $comment);
+        $form->handleRequest($request);
 
-		$form = $this->createForm(CommentForm::class, $comment);
-		$form->handleRequest($request);
+        if ($form->isSubmitted() && $form->isValid()) {
+            $comment->setArticle($article);
+            $comment->setCreatedAt(new \DateTime());
 
-		if ($form->isSubmitted() && $form->isValid()) {
-			$comment->setCreatedAt(new \DateTime());
+            $entityManager->persist($comment);
+            $entityManager->flush();
 
-			$entityManager->persist($comment);
-			$entityManager->flush();
+            return $this->redirectToRoute('app_article_show', ['id' => $article->getId()]);
+        }
 
-			$this->addFlash('success', 'Votre commentaire a été publié avec succès !');
-
-			return $this->redirectToRoute(
-				'app_article_show',
-				['id' => $article->getId()],
-				Response::HTTP_SEE_OTHER
-			);
-		}
-
-		return $this->render('article/show.html.twig', [
-			'article' => $article,
-			'commentForm' => $form->createView(),
-		]);
+        return $this->render('article/show.html.twig', [
+            'article' => $article,
+            'commentForm' => $form,
+        ]);
     }
 
     #[Route('/{id}/edit', name: 'app_article_edit', methods: ['GET', 'POST'])]
