@@ -19,7 +19,6 @@ use Knp\Component\Pager\PaginatorInterface;
 final class ArticleController extends AbstractController
 {
     #[Route('/', name: 'app_article_index', methods: ['GET'])]
-
     public function index(ArticleRepository $articleRepository, PaginatorInterface $paginator, Request $request): Response
     {
         $query = $articleRepository->createQueryBuilder('a')
